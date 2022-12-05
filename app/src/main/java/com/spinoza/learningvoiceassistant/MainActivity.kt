@@ -3,7 +3,6 @@ package com.spinoza.learningvoiceassistant
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognizerIntent
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -168,11 +167,8 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                 ?.get(0)?.let { question ->
-                    Log.d("spinozatest", question)
                     mainViewModel.askWolfram(question)
                     textInputRequest.setText(question)
-                    Log.d("spinozatest", textInputRequest.text.toString())
-
                 }
         }
     }
