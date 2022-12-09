@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var textInputRequest: TextInputEditText
     private lateinit var podsAdapter: SimpleAdapter
+    private lateinit var viewSnackbar: View
 
     private var getFromVoiceInputDialog =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult())
@@ -48,12 +49,13 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(materialToolbar)
 
         progressBar = findViewById(R.id.progressBar)
+        viewSnackbar = findViewById(android.R.id.content)
 
         textInputRequest = findViewById(R.id.textInputRequest)
         textInputRequest.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                val question = textInputRequest.text.toString()
-                mainViewModel.askWolfram(question)
+                mainViewModel.clearPods()
+                mainViewModel.askWolfram(textInputRequest.text.toString())
             }
 
             return@setOnEditorActionListener false
@@ -72,11 +74,9 @@ class MainActivity : AppCompatActivity() {
             mainViewModel.speak(position)
         }
 
-        val voiceInputButton: FloatingActionButton = findViewById(
-            R.id.voiceInputButton
-        )
+        val voiceInputButton: FloatingActionButton = findViewById(R.id.voiceInputButton)
         voiceInputButton.setOnClickListener {
-            clearPods()
+            mainViewModel.clearPods()
             mainViewModel.stopSpeaking()
             showVoiceInputDialog()
         }
@@ -123,7 +123,8 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.action_clear -> {
-                clearPods()
+                textInputRequest.text?.clear()
+                mainViewModel.clearPods()
                 return true
             }
         }
@@ -132,10 +133,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun showSnackbar(message: String) {
-        Snackbar.make(
-            findViewById(android.R.id.content),
-            message, Snackbar.LENGTH_INDEFINITE
-        ).apply {
+        Snackbar.make(viewSnackbar, message, Snackbar.LENGTH_INDEFINITE).apply {
             setAction(android.R.string.ok) {
                 dismiss()
             }
@@ -167,14 +165,9 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                 ?.get(0)?.let { question ->
-                    mainViewModel.askWolfram(question)
                     textInputRequest.setText(question)
+                    mainViewModel.askWolfram(question)
                 }
         }
-    }
-
-    fun clearPods() {
-        textInputRequest.text?.clear()
-        mainViewModel.clearPods()
     }
 }

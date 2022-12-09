@@ -58,11 +58,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun askWolfram(request: String) {
-        clearPods()
         progressBarVisibility.value = true
         CoroutineScope(Dispatchers.IO).launch {
             val query = waEngine.createQuery().apply { input = request }
-            kotlin.runCatching {
+            runCatching {
                 waEngine.performQuery(query)
             }.onSuccess { result ->
                 withContext(Dispatchers.Main) {
