@@ -27,13 +27,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var textInputRequest: TextInputEditText
     private lateinit var podsAdapter: SimpleAdapter
-    private lateinit var viewSnackbar: View
+    private lateinit var viewSnackBar: View
 
     private var getFromVoiceInputDialog =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult())
-        { result ->
-            onActivityResult(result)
-        }
+        { result -> onActivityResult(result) }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         mainViewModel = ViewModelProvider(this)[MainViewModel::class.java]
         initViews()
-        seObserves()
+        setObserves()
     }
 
     private fun initViews() {
@@ -49,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(materialToolbar)
 
         progressBar = findViewById(R.id.progressBar)
-        viewSnackbar = findViewById(android.R.id.content)
+        viewSnackBar = findViewById(android.R.id.content)
 
         textInputRequest = findViewById(R.id.textInputRequest)
         textInputRequest.setOnEditorActionListener { _, actionId, _ ->
@@ -83,17 +81,14 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun seObserves() {
+    private fun setObserves() {
         mainViewModel.isProgressBar().observe(this) { isProgressBar ->
-            if (isProgressBar)
-                progressBar.visibility = View.VISIBLE
-            else
-                progressBar.visibility = View.GONE
+            progressBar.visibility = if (isProgressBar) View.VISIBLE else View.GONE
         }
 
         mainViewModel.getErrorMessage().observe(this) { message ->
             val text = message ?: getString(R.string.error_something_went_wrong)
-            showSnackbar(text)
+            showSnackBar(text)
         }
 
         mainViewModel.getErrorInputRequest().observe(this) {
@@ -101,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         mainViewModel.getErrorTts().observe(this) {
-            showSnackbar(getString(R.string.error_tts_is_not_ready))
+            showSnackBar(getString(R.string.error_tts_is_not_ready))
         }
 
         mainViewModel.isDataSetChanged().observe(this) { isDataSetChanged ->
@@ -132,11 +127,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun showSnackbar(message: String) {
-        Snackbar.make(viewSnackbar, message, Snackbar.LENGTH_INDEFINITE).apply {
-            setAction(android.R.string.ok) {
-                dismiss()
-            }
+    private fun showSnackBar(message: String) {
+        Snackbar.make(viewSnackBar, message, Snackbar.LENGTH_INDEFINITE).apply {
+            setAction(android.R.string.ok) { dismiss() }
             show()
         }
     }
@@ -150,14 +143,10 @@ class MainActivity : AppCompatActivity() {
             putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.request_hint))
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US)
         }
-        runCatching {
-            getFromVoiceInputDialog.launch(intent)
-
-        }.onFailure { t ->
-            showSnackbar(
-                t.message ?: getString(R.string.error_voice_recognition_unavailable)
-            )
-        }
+        runCatching { getFromVoiceInputDialog.launch(intent) }
+            .onFailure { t ->
+                showSnackBar(t.message ?: getString(R.string.error_voice_recognition_unavailable))
+            }
     }
 
 

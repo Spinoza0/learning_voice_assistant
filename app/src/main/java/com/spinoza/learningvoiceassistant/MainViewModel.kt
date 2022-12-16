@@ -61,40 +61,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         progressBarVisibility.value = true
         CoroutineScope(Dispatchers.IO).launch {
             val query = waEngine.createQuery().apply { input = request }
-            runCatching {
-                waEngine.performQuery(query)
-            }.onSuccess { result ->
-                withContext(Dispatchers.Main) {
-                    progressBarVisibility.value = false
-                    if (result.isError) {
-                        errorMessage.value = result.errorMessage
-                    } else if (!result.isSuccess) {
-                        errorInputRequest.value = ""
-                    } else {
-                        for (pod in result.pods) {
-                            if (pod.isError) continue
-                            val content = StringBuilder()
-                            for (subpod in pod.subpods) {
-                                for (element in subpod.contents) {
-                                    if (element is WAPlainText) {
-                                        content.append(element.text)
+            runCatching { waEngine.performQuery(query) }
+                .onSuccess { result ->
+                    withContext(Dispatchers.Main) {
+                        progressBarVisibility.value = false
+                        if (result.isError) {
+                            errorMessage.value = result.errorMessage
+                        } else if (!result.isSuccess) {
+                            errorInputRequest.value = ""
+                        } else {
+                            for (pod in result.pods) {
+                                if (pod.isError) continue
+                                val content = StringBuilder()
+                                for (subPod in pod.subpods) {
+                                    for (element in subPod.contents) {
+                                        if (element is WAPlainText) {
+                                            content.append(element.text)
+                                        }
                                     }
                                 }
+                                pods.add(0, HashMap<String, String>().apply {
+                                    put(KEY_FIELD_NAME, pod.title)
+                                    put(VALUE_FIELD_NAME, content.toString())
+                                })
                             }
-                            pods.add(0, HashMap<String, String>().apply {
-                                put(KEY_FIELD_NAME, pod.title)
-                                put(VALUE_FIELD_NAME, content.toString())
-                            })
+                            dataSetChanged.value = true
                         }
-                        dataSetChanged.value = true
+                    }
+                }.onFailure { t ->
+                    withContext(Dispatchers.Main) {
+                        progressBarVisibility.value = false
+                        errorMessage.value = t.message
                     }
                 }
-            }.onFailure { t ->
-                withContext(Dispatchers.Main) {
-                    progressBarVisibility.value = false
-                    errorMessage.value = t.message
-                }
-            }
         }
     }
 
@@ -111,6 +110,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             textToSpeech.stop()
         }
     }
-
 }
 
