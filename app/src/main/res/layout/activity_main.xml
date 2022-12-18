@@ -52,7 +52,8 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_baseline_keyboard_voice_24"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="@string/voice_input_button" />
 
     <ProgressBar
         android:id="@+id/progressBar"

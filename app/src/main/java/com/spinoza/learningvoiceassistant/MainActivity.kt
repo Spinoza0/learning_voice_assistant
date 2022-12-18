@@ -7,25 +7,21 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.ListView
-import android.widget.ProgressBar
 import android.widget.SimpleAdapter
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.textfield.TextInputEditText
+import com.spinoza.learningvoiceassistant.databinding.ActivityMainBinding
+import com.spinoza.learningvoiceassistant.databinding.ItemPodBinding
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var bindingItem: ItemPodBinding
     private lateinit var mainViewModel: MainViewModel
-
-    private lateinit var progressBar: ProgressBar
-    private lateinit var textInputRequest: TextInputEditText
     private lateinit var podsAdapter: SimpleAdapter
     private lateinit var viewSnackBar: View
 
@@ -36,44 +32,40 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        bindingItem = ItemPodBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         mainViewModel = ViewModelProvider(this)[MainViewModel::class.java]
         initViews()
         setObserves()
     }
 
     private fun initViews() {
-        val materialToolbar: MaterialToolbar = findViewById(R.id.materialToolbar)
-        setSupportActionBar(materialToolbar)
-
-        progressBar = findViewById(R.id.progressBar)
+        setSupportActionBar(binding.materialToolbar)
         viewSnackBar = findViewById(android.R.id.content)
 
-        textInputRequest = findViewById(R.id.textInputRequest)
-        textInputRequest.setOnEditorActionListener { _, actionId, _ ->
+        binding.textInputRequest.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 mainViewModel.clearPods()
-                mainViewModel.askWolfram(textInputRequest.text.toString())
+                mainViewModel.askWolfram(binding.textInputRequest.text.toString())
             }
 
             return@setOnEditorActionListener false
         }
 
-        val listViewPods: ListView = findViewById(R.id.listViewPods)
         podsAdapter = SimpleAdapter(
             applicationContext,
             mainViewModel.getPods(),
             R.layout.item_pod,
             arrayOf(MainViewModel.KEY_FIELD_NAME, MainViewModel.VALUE_FIELD_NAME),
-            intArrayOf(R.id.textViewTitle, R.id.textViewContent)
+            intArrayOf(bindingItem.textViewTitle.id, bindingItem.textViewContent.id)
         )
-        listViewPods.adapter = podsAdapter
-        listViewPods.setOnItemClickListener { _, _, position, _ ->
+        binding.listViewPods.adapter = podsAdapter
+        binding.listViewPods.setOnItemClickListener { _, _, position, _ ->
             mainViewModel.speak(position)
         }
 
-        val voiceInputButton: FloatingActionButton = findViewById(R.id.voiceInputButton)
-        voiceInputButton.setOnClickListener {
+        binding.voiceInputButton.setOnClickListener {
             mainViewModel.clearPods()
             mainViewModel.stopSpeaking()
             showVoiceInputDialog()
@@ -83,7 +75,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setObserves() {
         mainViewModel.isProgressBar().observe(this) { isProgressBar ->
-            progressBar.visibility = if (isProgressBar) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isProgressBar) View.VISIBLE else View.GONE
         }
 
         mainViewModel.getErrorMessage().observe(this) { message ->
@@ -92,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         mainViewModel.getErrorInputRequest().observe(this) {
-            textInputRequest.error = getString(R.string.error_do_not_understand)
+            binding.textInputRequest.error = getString(R.string.error_do_not_understand)
         }
 
         mainViewModel.getErrorTts().observe(this) {
@@ -118,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.action_clear -> {
-                textInputRequest.text?.clear()
+                binding.textInputRequest.text?.clear()
                 mainViewModel.clearPods()
                 return true
             }
@@ -154,7 +146,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                 ?.get(0)?.let { question ->
-                    textInputRequest.setText(question)
+                    binding.textInputRequest.setText(question)
                     mainViewModel.askWolfram(question)
                 }
         }
